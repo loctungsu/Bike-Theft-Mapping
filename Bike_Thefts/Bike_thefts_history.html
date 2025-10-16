@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>GEOG 485L/585L Lab 03</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+    <script src="Bike_Thefts_sample1.js"></script>
+    <!-- The geojs file-->
+    <style>
+      #mapId {
+        width: 900px;
+        height: 500px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="mapId"></div>
+
+    <script>
+      "user strict";
+      function fitlerStolenValue(feature) {
+        if (feature.properties["Stolen Value"] < 200) {
+          return false; 
+        } else {
+          return true;
+        }
+      }
+      function pointToCircle(feature, latlng) {
+        // if (Number(feature.properties.District) == 1) {
+        //   fillColor_Var = "blue";
+        // } else if (Number(feature.properties.District) == 2) {
+        //   fillColor_Var = "red";
+        // } else {
+        //   fillColor_Var = "yellow";
+        // }
+        if (Number(feature.properties["Theft Hour"]) > 6 &&  Number(feature.properties["Theft Hour"]) <= 16) {
+          fillColor_Var = "yellow";
+        } else if ((Number(feature.properties["Theft Hour"] <= 6 ) && Number(feature.properties["Theft Hour"] >= 0) || 
+        (Number(feature.properties["Theft Hour"]) > 22 && Number(feature.properties["Theft Hour"]) <= 23))) {
+          fillColor_Var = "orange";
+        } else {
+          fillColor_Var = "purple";
+        }
+        var geojsonMarkerOptions = {
+          radius: 8,
+          fillColor: fillColor_Var, //Maybe change color
+          color: "black",
+          weight: 1,
+          opacity : 1,
+          fillOpacity: 0.8
+        };
+        var circleMarker = L.circleMarker(latlng, geojsonMarkerOptions);
+        
+        return circleMarker;
+      }
+      /* 
+        initialize the map. 
+        setView method: Sets the view of the map (geographical center and zoom) with the given animation options.
+        setView( <LatLng> center, <Number> zoom?, <zoom/pan options> options? )
+      */
+      function addPopups(feature, layer) {
+        //this if statement used to check whether the feature has a property named "Location"
+        if (feature.properties && feature.properties.Location) {
+          var popupContent = `
+                <dl>
+                  <dt><strong>Location:</strong></dt>
+                  <dd>${feature.properties.Location}</dd>
+                  <dt><strong>Stolen Value:</strong></dt>
+                  <dd>${feature.properties["Stolen Value"]}</dd>
+                </dl>`;
+                
+          layer.bindPopup(popupContent);
+        }
+      }
+      // var map = L.map("mapId").setView([35.0843, -106.6241], 12);
+      var map = L.map("mapId");
+      //replace the code below from the Plain JavaScript from the map style you choose
+      //at http://leaflet-extras.github.io/leaflet-providers/preview/
+
+      var OpenTopoMap = L.tileLayer(
+        "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+        {
+          maxZoom: 17,
+          attribution:
+            'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+        }
+      );
+
+      //change the varialbe "OpenTopoMap" according to the map style you choose
+      //It is the varialbe between "var" and "= L.titleLayer(..."  in Line 28 in this script
+      OpenTopoMap.addTo(map);
+
+      // L.geoJSON(bikeThefts, {
+      //   onEachFeature: addPopups,
+      // }).addTo(map);
+
+      var bikesLayerGroup = L.geoJSON(bikeThefts, {
+        onEachFeature: addPopups,
+        pointToLayer: pointToCircle,
+        filter: fitlerStolenValue
+      });
+      map.addLayer(bikesLayerGroup);
+      map.fitBounds(bikesLayerGroup.getBounds());
+    </script>
+  </body>
+</html>
